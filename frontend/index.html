@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Face-Recognition Web App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- add iconlibrary -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
+  </head>
+
+  <body>
+    <nav class="bg-gray-100 p-4 flex space-x-8 justify-center">
+      <button
+        onclick="loadContent('home')"
+        class="bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded fa fas fa-home"
+      >
+        Home
+      </button>
+      <button
+        onclick="loadContent('register')"
+        class="bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded fa fas fa-user-plus"
+      >
+        Register
+      </button>
+      <button
+        onclick="loadContent('admin')"
+        class="bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded fa fas fa-user-shield"
+      >
+        Admin
+      </button>
+    </nav>
+
+    <section class="p-4 bg-gray-50 w-full h-screen hidden" id="main-content">
+      <div
+        id="content"
+        class="w-full h-full flex items-center justify-center flex-col space-y-4"
+      >
+        <div
+          id="video-input"
+          class="bg-gray-300 border-2 border-solid border-gray-400 rounded-lg p-4 w-96 h-96 flex flex-col items-center justify-center relative"
+        >
+          <video
+            id="liveVideo"
+            class="w-full h-full rounded-lg object-cover hidden absolute top-0 left-0"
+            autoplay
+            playsinline
+          ></video>
+          <span
+            id="video-placeholder"
+            class="text-gray-600 absolute text-center"
+            >Camera will appear here...</span
+          >
+        </div>
+
+        <div
+          id="result-box"
+          class="hidden bg-white shadow-lg rounded-lg px-8 py-6 text-center max-w-md"
+        >
+          <div id="result-status" class="mb-4">
+            <p id="result-text" class="text-2xl font-bold mb-2"></p>
+            <p id="result-details" class="text-gray-600 text-sm"></p>
+          </div>
+          <button
+            onclick="resetCamera()"
+            class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-6 rounded flex items-center gap-2 mx-auto"
+          >
+            <i class="fas fa-redo"></i> Reset
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section
+      class="p-4 bg-gray-50 w-full h-screen hidden"
+      id="register-content"
+    >
+      <div
+        id="register-form"
+        class="w-full h-full flex items-center justify-center flex-col space-y-4 overflow-y-auto"
+      >
+        <div class="flex gap-8 w-full max-w-5xl">
+          <form
+            id="registerForm"
+            class="bg-white shadow-md rounded px-8 pt-6 pb-8 flex-1 min-w-0"
+          >
+            <h2 class="text-2xl font-bold mb-6 text-gray-800">
+              Register New Person
+            </h2>
+            <div class="mb-4">
+              <label
+                class="block text-gray-700 text-sm font-bold mb-2"
+                for="username"
+              >
+                Full Name
+              </label>
+              <input
+                class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                id="username"
+                type="text"
+                placeholder="Enter your full name"
+                required
+              />
+              <label
+                class="block text-gray-700 text-sm font-bold mb-2 mt-4"
+                for="email"
+              >
+                Email
+              </label>
+              <input
+                class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                id="email"
+                type="email"
+                placeholder="Enter your email"
+                required
+              />
+            </div>
+            <div class="mb-4">
+              <label
+                class="block text-gray-700 text-sm font-bold mb-2"
+                for="address1"
+              >
+                Address line 1
+              </label>
+              <input
+                class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                id="address1"
+                type="text"
+                placeholder="Enter your address"
+              />
+              <label
+                class="block text-gray-700 text-sm font-bold mb-2 mt-4"
+                for="address2"
+              >
+                Address line 2
+              </label>
+              <input
+                class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                id="address2"
+                type="text"
+                placeholder="Enter your address"
+              />
+            </div>
+            <div class="mb-6">
+              <label
+                class="block text-gray-700 text-sm font-bold mb-2"
+                for="phone"
+              >
+                Phone Number
+              </label>
+              <input
+                class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                id="phone"
+                type="tel"
+                placeholder="Enter your phone number"
+              />
+            </div>
+            <div class="flex gap-4">
+              <button
+                type="submit"
+                class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-6 rounded flex items-center gap-2"
+              >
+                <i class="fas fa-check"></i> Register
+              </button>
+              <button
+                type="reset"
+                class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded flex items-center gap-2"
+              >
+                <i class="fas fa-times"></i> Clear
+              </button>
+            </div>
+          </form>
+          <div
+            id="take-a-photo"
+            class="bg-gray-300 border-2 border-solid border-gray-400 rounded-lg p-4 flex-1 flex flex-col items-center justify-center min-w-0"
+          >
+            <video
+              id="regVideo"
+              class="w-full h-64 rounded-lg object-cover hidden mb-4"
+              autoplay
+              playsinline
+            ></video>
+            <canvas
+              id="photoCanvas"
+              class="w-full max-h-64 rounded-lg hidden mb-4"
+            ></canvas>
+            <div id="photo-placeholder" class="text-gray-600 text-center">
+              <p class="mb-4">Take a photo for registration</p>
+              <button
+                type="button"
+                onclick="initRegisterCamera()"
+                class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-4 flex items-center gap-2 mx-auto"
+              >
+                <i class="fas fa-video"></i> Start Camera
+              </button>
+            </div>
+            <div
+              id="camera-controls"
+              class="hidden flex gap-4 w-full justify-center"
+            >
+              <button
+                type="button"
+                onclick="captureRegisterPhoto()"
+                class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded flex items-center gap-2"
+              >
+                <i class="fas fa-camera"></i> Capture
+              </button>
+              <button
+                type="button"
+                onclick="stopRegisterCamera()"
+                class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded flex items-center gap-2"
+              >
+                <i class="fas fa-stop"></i> Stop
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="p-4 bg-gray-50 w-full h-screen hidden" id="admin-content">
+      <div class="w-full h-full flex items-center justify-center flex-col">
+        <div
+          class="bg-white shadow-md rounded px-8 pt-6 pb-8 w-1/2 text-center"
+        >
+          <h2 class="text-3xl font-bold mb-6 text-gray-800">Admin Panel</h2>
+          <p class="text-gray-700 mb-4">Admin features coming soon...</p>
+          <div class="flex gap-4 justify-center">
+            <div class="bg-blue-100 p-4 rounded">
+              <i class="fas fa-users text-blue-500 text-2xl mb-2"></i>
+              <p class="text-gray-700">Manage Users</p>
+            </div>
+            <div class="bg-green-100 p-4 rounded">
+              <i class="fas fa-chart-bar text-green-500 text-2xl mb-2"></i>
+              <p class="text-gray-700">View Statistics</p>
+            </div>
+            <div class="bg-red-100 p-4 rounded">
+              <i class="fas fa-cogs text-red-500 text-2xl mb-2"></i>
+              <p class="text-gray-700">Settings</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <script src="app.js"></script>
+  </body>
+</html>
