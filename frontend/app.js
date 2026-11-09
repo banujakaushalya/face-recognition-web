@@ -338,7 +338,7 @@ document.addEventListener("DOMContentLoaded", function () {
           stopRegisterCamera();
           document.getElementById("photoCanvas").classList.add("hidden");
         } else {
-          alert(`Error: ${result.message}`);
+          alert(`Error: ${result.detail || result.message || "Registration failed"}`);
         }
       } catch (error) {
         console.error("Error during registration:", error);

@@ -1,24 +1,15 @@
 # face recognizing website backend
 
-from fastapi import FastAPI
-from flask import session
+from fastapi import FastAPI, Depends, HTTPException, UploadFile, File
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import base64
 import cv2
 import numpy as np
 from insightface.app import FaceAnalysis
-import matplotlib.pyplot as plt
-from fastapi.middleware.cors import CORSMiddleware
-import numpy as np
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy import Column, Integer, String, Identity
-from sqlalchemy.orm import declarative_base
+from sqlalchemy import create_engine, Column, Integer, String, Identity, text
+from sqlalchemy.orm import sessionmaker, declarative_base, Session
 from pgvector.sqlalchemy import Vector
-from sqlalchemy.orm import Session
-from fastapi import Depends
-from fastapi import UploadFile, File
-from sqlalchemy import text
 from dotenv import load_dotenv
 import os
 
@@ -27,16 +18,11 @@ load_dotenv()
 
 app = FastAPI()
 
-# CORS configuration to allow requests from the frontend
-origins = [
-    "http://127.0.0.1:5500",
-    "http://localhost:5500",
-]
-
+# CORS configuration to allow requests from any origin (including file:// origin 'null' and local dev servers)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -87,10 +73,13 @@ async def recognize_face(frame: UploadFile = File(...), db: Session = Depends(ge
     image = np.frombuffer(image_bytes, np.uint8)
     image = cv2.imdecode(image, cv2.IMREAD_COLOR)
 
+    if image is None:
+        return {"status": "no_face", "message": "Failed to decode image frame."}
+
     faces = face_analysis.get(image)
 
     if len(faces) == 0:
-        return {"message": "No face detected in the image."}
+        return {"status": "no_face", "message": "No face detected in the image."}
     
     feat2 = faces[0].embedding
 
@@ -119,8 +108,7 @@ async def recognize_face(frame: UploadFile = File(...), db: Session = Depends(ge
             "distance": float(user.distance)
         }
 
-    return {"status": "rejected", "recognized": False}
-
+    return {"status": "rejected", "recognized": False, "message": "Face not recognized in database"}
 
 
 class RegisterRequest(BaseModel):
@@ -141,42 +129,45 @@ async def register_face(data: RegisterRequest, db: Session = Depends(get_db)):
     photo = data.photo
 
     # Decode the base64 image
+    try:
+        base64_data = data.photo.split(",")[1] if "," in data.photo else data.photo
+        image_bytes = base64.b64decode(base64_data)
+        nparr = np.frombuffer(image_bytes, np.uint8)
+        image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Invalid image format: {str(e)}")
 
-    base64_data = data.photo.split(",")[1]
-
-    image_bytes = base64.b64decode(base64_data)
-
-    nparr = np.frombuffer(image_bytes, np.uint8)
-
-    image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+    if image is None:
+        raise HTTPException(status_code=400, detail="Failed to decode image.")
 
     faces = face_analysis.get(image)
-    rimg = face_analysis.draw_on(image, faces)
-    rimg_rgb = cv2.cvtColor(rimg, cv2.COLOR_BGR2RGB)
 
-    # Display the image with detected faces (for testing purposes)
-    # plt.figure(figsize=(10, 10))
-    # plt.imshow(rimg_rgb)
-    # plt.axis('off')
-    # plt.title('Face Detection with insightface (buffalo_l)')
-    # plt.show()
+    if len(faces) == 0:
+        raise HTTPException(status_code=400, detail="No face detected in the photo. Please capture again.")
 
     feat1 = faces[0].embedding
+    feat1_norm = feat1 / np.linalg.norm(feat1)
 
     user = User(
-
         full_name=fullName,
         email=email,
         address1=address1,
         address2=address2,
         phone=phone,
-        embedding=feat1
+        embedding=feat1_norm.tolist()
     )
 
     db.add(user)
     db.commit()
     db.refresh(user)
 
+    return {
+        "status": "success",
+        "message": "User registered successfully",
+        "id": user.id,
+        "name": user.full_name
+    }
+
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="localhost", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8000)
