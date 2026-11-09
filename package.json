@@ -1,0 +1,14 @@
+{
+  "name": "face-recognition-web",
+  "version": "1.0.0",
+  "description": "Face recognition web application",
+  "type": "module",
+  "scripts": {
+    "dev": "tailwindcss -i ./frontend/style.css -o ./frontend/dist/output.css --watch"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.1",
+    "postcss": "^8.4.31",
+    "autoprefixer": "^10.4.16"
+  }
+}
